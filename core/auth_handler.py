@@ -8,7 +8,7 @@ import base64
 import httpx
 from typing import List, Dict, Optional
 
-from core.session_store import SessionStore
+from core.session_store import SessionStore, Session
 
 
 def login_all_roles(target_url: str, credentials: List[Dict[str, str]]) -> SessionStore:
@@ -51,8 +51,16 @@ def login_all_roles(target_url: str, credentials: List[Dict[str, str]]) -> Sessi
             data = response.json()
             jwt_token = data["authentication"]["token"]
             
+            # Create Session object
+            session = Session(
+                role=role,
+                cookies={},
+                headers={},
+                jwt_token=jwt_token
+            )
+            
             # Store in session_store
-            session_store.add(role, cookies={}, headers={}, jwt=jwt_token)
+            session_store.add(session)
             
             print(f"[+] Logged in as {role}")
         
