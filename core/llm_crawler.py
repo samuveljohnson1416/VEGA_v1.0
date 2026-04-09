@@ -96,17 +96,21 @@ class LLMCrawler:
                             auth_required=bool(ep_data.get("auth_required", False)),
                             roles_allowed=[]
                         )
-                        self.endpoints.append(endpoint)
-                        
-                        # Only crawl HTML pages, not API endpoints
-                        # Skip /api/ and /rest/ from recursive crawling
-                        if "/api/" not in abs_url and "/rest/" not in abs_url:
-                            to_visit.append(abs_url)
-                            print(f"[*] Added {abs_url} to crawl queue")
+                        # Dedup: skip if URL already in endpoints
+                        if not any(e.url == endpoint.url for e in self.endpoints):
+                            self.endpoints.append(endpoint)
+                            
+                            # Only crawl HTML pages, not API endpoints
+                            # Skip /api/ and /rest/ from recursive crawling
+                            if "/api/" not in abs_url and "/rest/" not in abs_url:
+                                to_visit.append(abs_url)
+                                print(f"[*] Added {abs_url} to crawl queue")
+                            else:
+                                print(f"[*] Added API endpoint (not crawling): {abs_url}")
+                            
+                            endpoint_count += 1
                         else:
-                            print(f"[*] Added API endpoint (not crawling): {abs_url}")
-                        
-                        endpoint_count += 1
+                            print(f"[*] Skipping duplicate endpoint: {abs_url}")
                     except Exception as e:
                         print(f"[-] Failed to create endpoint: {e}")
                         pass
