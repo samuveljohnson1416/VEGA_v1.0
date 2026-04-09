@@ -36,11 +36,21 @@ class LLMResultAnalyzer:
             body_snippet = str(response_body)[:5000]
             
             # Build prompt
-            prompt = f"""You are a security analyst. Analyze this HTTP response:
-Status: {response_code}
-Body: {body_snippet}
+            prompt = f"""You are a web security analyst. An attack payload was sent to a web application.
+Determine if the response indicates a real vulnerability.
 
-Is this a real vulnerability or false positive?
+Payload type: {attack_result.payload.get('type', 'unknown')}
+Payload value: {attack_result.payload.get('value', '')}
+Target param: {attack_result.payload.get('param', '')}
+HTTP Status: {response_code}
+Response body (first 1000 chars): {body_snippet[:1000]}
+
+Rules:
+- SQLi: vulnerable if SQL error, stack trace, or unexpected data dump in response
+- XSS: vulnerable if payload is reflected back unescaped in response body
+- IDOR: vulnerable if status 200 with another user's data
+- CSRF: vulnerable if action succeeded without token validation
+
 Return JSON only:
 {{"is_vulnerable": boolean, "confidence": number, "reason": "string"}}"""
             
@@ -69,8 +79,8 @@ Return JSON only:
                 "reason": str(data.get("reason", ""))
             }
         
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[-] Analyzer error: {e}")
         
         return {
             "is_vulnerable": False,

@@ -117,6 +117,11 @@ class LLMCrawler:
                 
                 print(f"[*] Parsed endpoints: {endpoint_count}")
             
+            # Probe common paths before returning
+            print("[*] Probing common paths...")
+            async with httpx.AsyncClient() as client:
+                await self._probe_common_paths(self.target_url, client)
+            
             # Build AppMap
             app_map = AppMap(
                 target_url=self.target_url,
@@ -199,3 +204,25 @@ HTML:
             print(f"[-] LLM ANALYSIS ERROR: {type(e).__name__}: {e}")
             traceback.print_exc()
             return None
+    
+    async def _probe_common_paths(self, base_url: str, client: httpx.AsyncClient):
+        """Probe common paths and add discovered endpoints."""
+        common_paths = [
+            "/api", "/api/v1", "/api/v2", "/rest", "/graphql",
+            "/admin", "/swagger", "/swagger.json", "/openapi.json",
+            "/.env", "/config", "/backup", "/debug", "/login",
+            "/logout", "/register", "/profile", "/dashboard",
+            "/api/v1/users", "/api/v1/products", "/api/v1/orders",
+            "/api/v1/feedbacks", "/api/v1/complaints", "/api/v1/challenges"
+        ]
+        for path in common_paths:
+            full_url = base_url.rstrip("/") + path
+            try:
+                r = await client.get(full_url, timeout=5.0)
+                if r.status_code < 500:
+                    print(f"[*] Probing found: {path} ({r.status_code})")
+                    ep = Endpoint(url=full_url, method="GET", params=[], auth_required=False, roles_allowed=[])
+                    if not any(e.url == full_url for e in self.endpoints):
+                        self.endpoints.append(ep)
+            except Exception:
+                pass

@@ -101,7 +101,9 @@ class LLMScanOrchestrator:
                                 continue
                             
                             # Analyze result
+                            print(f"[DEBUG] Attack result: status={attack_result.response_code}, body_preview={attack_result.response_body[:200]}")
                             analysis = analyzer.analyze(attack_result)
+                            print(f"[DEBUG] Analyzer verdict: {analysis}")
                             
                             # Track attack
                             attack_entry = {
