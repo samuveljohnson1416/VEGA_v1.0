@@ -1,0 +1,13 @@
+langchain-groq
+langgraph
+langchain
+python-dotenv
+fastapi
+uvicorn
+httpx
+playwright
+beautifulsoup4
+networkx
+sqlalchemy
+pyjwt
+python-multipart
